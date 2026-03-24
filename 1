@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Арена — Концепт</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────── */
+:root {
+  --bg:#161616; --bg2:#1e1e1e; --bg3:#242424;
+  --card:#212121; --border:#2a2a2a; --border2:#333;
+  --blue:#3b7eff; --blue-dim:rgba(59,126,255,.12);
+  --gold:#f5a623; --gold-dim:rgba(245,166,35,.15);
+  --green:#30d158; --green-dim:rgba(48,209,88,.15);
+  --red:#ff453a;
+  --text1:#fff; --text2:#ababab; --text3:#555;
+  --pill:rgba(28,28,28,.88);
+  --font:'Manrope',sans-serif; --r:14px; --r2:20px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--font);background:#0a0a0a;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+
+/* ── PHONE ───────────────────────────────────────────── */
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);
+  box-shadow:0 0 0 1px #2c2c2e,0 0 0 10px #1c1c1e,0 0 0 12px #2c2c2e,0 60px 120px rgba(0,0,0,.97);flex-shrink:0;}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:126px;height:37px;background:#0a0a0a;border-radius:0 0 20px 20px;z-index:300;}
+
+/* ── SCREENS ─────────────────────────────────────────── */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;background:var(--bg);
+  transition:opacity .28s ease,transform .28s cubic-bezier(.25,.46,.45,.94);
+  transform:translateX(32px);}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.screen.exit{opacity:0;transform:translateX(-20px);pointer-events:none;}
+
+/* ── STATUS BAR ──────────────────────────────────────── */
+.sbar{height:47px;padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10;}
+.sbar-time{font-size:15px;font-weight:700;color:var(--text1);letter-spacing:-.3px;}
+.sbar-r{display:flex;align-items:center;gap:5px;}
+
+/* ── NAV ─────────────────────────────────────────────── */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 4px;flex-shrink:0;position:relative;}
+.topnav-title{font-size:17px;font-weight:600;color:var(--text1);letter-spacing:-.4px;position:absolute;left:50%;transform:translateX(-50%);}
+.back-btn,.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--pill);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s;flex-shrink:0;}
+.back-btn:active,.icon-btn:active{opacity:.5;}
+
+/* ── TABBAR ──────────────────────────────────────────── */
+.tabbar{height:82px;background:var(--bg2);border-top:.5px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-around;padding-top:10px;flex-shrink:0;z-index:50;}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+  padding:2px 8px;user-select:none;transition:opacity .15s;flex:1;}
+.tab:active{opacity:.5;}
+.tab-ico{font-size:22px;}
+.tab-lbl{font-size:10px;font-weight:500;color:var(--text3);}
+.tab.active .tab-lbl{color:var(--blue);}
+
+/* ── MAP ─────────────────────────────────────────────── */
+.map-wrap{flex:1;position:relative;overflow:hidden;cursor:grab;}
+.map-wrap.dragging{cursor:grabbing;}
+.map-canvas{position:absolute;width:1200px;height:1200px;top:50%;left:50%;
+  transform-origin:center center;will-change:transform;}
+.map-bg-tile{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 55% 35%,rgba(59,126,255,.07),transparent 55%),
+    radial-gradient(ellipse at 20% 70%,rgba(48,209,88,.05),transparent 45%),#161616;}
+.map-grid-tile{position:absolute;inset:0;opacity:.065;
+  background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);
+  background-size:40px 40px;}
+
+/* Pulse dots */
+.pd{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--blue);
+  transform:translate(-50%,-50%);animation:pr 2.2s ease-out infinite;}
+@keyframes pr{0%{box-shadow:0 0 0 0 rgba(59,126,255,.7);}70%{box-shadow:0 0 0 10px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
+
+/* Challenge zones */
+.zone{position:absolute;border-radius:50%;border:1.5px dashed var(--blue);background:var(--blue-dim);
+  animation:zp 3s ease-in-out infinite;transform:translate(-50%,-50%);cursor:pointer;}
+@keyframes zp{0%,100%{opacity:.6;}50%{opacity:1;}}
+
+/* Bonus zone */
+.bonus-zone{position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,166,35,.18),transparent 70%);
+  border:1.5px dashed var(--gold);animation:zp 2.5s ease-in-out infinite;
+  transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+/* Map pins */
+.pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;transition:transform .2s;
+  display:flex;flex-direction:column;align-items:center;z-index:5;}
+.pin:active{transform:translate(-50%,-100%) scale(.9);}
+.pin-body{background:var(--card);border:.5px solid var(--border2);border-radius:10px;
+  padding:6px 10px;display:flex;align-items:center;gap:6px;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);white-space:nowrap;}
+.pin-body.b{background:var(--blue);border-color:transparent;}
+.pin-body.g{background:#1a1400;border-color:var(--gold);}
+.pin-ico{font-size:15px;}
+.pin-txt{font-size:12px;font-weight:600;color:var(--text1);}
+.pin::after{content:'';width:0;height:0;border-left:5px solid transparent;
+  border-right:5px solid transparent;border-top:6px solid var(--card);}
+.pin.b::after{border-top-color:var(--blue);}
+.pin.g::after{border-top-color:#1a1400;}
+.zoom-lbl{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:700;color:var(--text3);padding:3px 0;pointer-events:none;}
+
+/* ── HUD ─────────────────────────────────────────────── */
+.hud-top{position:absolute;top:0;left:0;right:0;padding:10px 16px 0;
+  display:flex;align-items:center;justify-content:space-between;pointer-events:none;}
+.hud-top>*{pointer-events:all;}
+.hud-bot{position:absolute;bottom:0;left:0;right:0;padding:0 16px 14px;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;transition:opacity .2s;}
+.hud-bot>*{pointer-events:all;}
+
+.ava{width:40px;height:40px;border-radius:50%;border:2px solid var(--blue);cursor:pointer;
+  background:linear-gradient(135deg,#1160fd,#7b5eea);
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;}
+.chips{display:flex;gap:8px;}
+.chip{background:var(--pill);backdrop-filter:blur(12px);border:.5px solid var(--border2);
+  border-radius:100px;padding:8px 12px;display:flex;align-items:center;gap:6px;cursor:pointer;}
+.chip-ico{font-size:15px;}
+.chip-val{font-size:14px;font-weight:700;color:var(--text1);}
+
+.city-bar{background:var(--pill);backdrop-filter:blur(12px);border:.5px solid var(--border2);
+  border-radius:var(--r2);padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.city-flag{font-size:20px;}
+.city-info{flex:1;min-width:0;}
+.city-nm{font-size:13px;font-weight:700;color:var(--text1);}
+.city-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.city-rank{font-size:13px;font-weight:800;color:var(--gold);white-space:nowrap;}
+.prog-t{flex:1;height:5px;background:var(--border2);border-radius:3px;overflow:hidden;margin-top:4px;}
+.prog-f{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),#7b5eea);}
+
+.list-btn{background:var(--blue);border-radius:100px;padding:13px 24px;
+  font-size:15px;font-weight:700;color:#fff;text-align:center;cursor:pointer;
+  box-shadow:0 4px 20px rgba(59,126,255,.4);transition:all .18s;}
+.list-btn:active{transform:scale(.97);opacity:.88;}
+
+.map-ctrls{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;}
+.mc{width:38px;height:38px;background:var(--pill);backdrop-filter:blur(8px);
+  border:.5px solid var(--border2);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:17px;font-weight:600;color:var(--text1);user-select:none;transition:opacity .15s;}
+.mc:active{opacity:.5;}
+
+/* ── TASKS PANEL ─────────────────────────────────────── */
+.tasks-panel{position:absolute;bottom:82px;left:0;right:0;z-index:60;pointer-events:all;}
+
+.tasks-handle{background:var(--pill);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:.5px solid var(--border2);border-radius:18px 18px 0 0;
+  padding:0 16px 12px;cursor:pointer;user-select:none;transition:background .18s;}
+.tasks-handle:active{background:rgba(30,30,30,.95);}
+.tasks-handle-bar{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:8px auto 10px;}
+.tasks-handle-content{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.tasks-handle-left{display:flex;align-items:center;gap:10px;}
+.tasks-handle-ico{font-size:22px;}
+.tasks-handle-title{font-size:14px;font-weight:700;color:var(--text1);}
+.tasks-handle-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.tasks-handle-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.tasks-day-prog{display:flex;gap:4px;}
+.tasks-day-seg{width:22px;height:5px;border-radius:3px;background:var(--border2);transition:background .3s;}
+.tasks-day-seg.done{background:var(--green);}
+.tasks-handle-oa{font-size:12px;font-weight:700;color:var(--green);}
+
+.tasks-expanded{display:none;flex-direction:column;background:var(--bg2);max-height:480px;overflow:hidden;}
+.tasks-panel.open .tasks-expanded{display:flex;animation:slideUp .3s cubic-bezier(.25,.46,.45,.94);}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.tasks-panel.open .tasks-handle{background:var(--bg2);backdrop-filter:none;
+  border-radius:18px 18px 0 0;border-bottom:.5px solid var(--border);}
+
+.tasks-exp-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;flex-shrink:0;}
+.tasks-exp-title{font-size:18px;font-weight:800;color:var(--text1);letter-spacing:-.3px;}
+.tasks-exp-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.tasks-streak{display:flex;align-items:center;gap:10px;margin:0 16px 10px;
+  background:linear-gradient(120deg,#1a1000,#1e1200);border:1px solid var(--gold);
+  border-radius:var(--r);padding:10px 12px;flex-shrink:0;}
+.tasks-tabs{display:flex;gap:0;padding:0 16px;border-bottom:.5px solid var(--border);flex-shrink:0;}
+.tasks-tab{flex:1;padding:8px 4px;text-align:center;font-size:12px;font-weight:600;
+  color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;user-select:none;}
+.tasks-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.tasks-tab-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:10px;padding-bottom:8px;display:flex;flex-direction:column;}
+.tasks-tab-body::-webkit-scrollbar{display:none;}
+
+/* ── TASK CARDS ──────────────────────────────────────── */
+.task-card{margin:0 16px 10px;background:var(--card);border-radius:var(--r2);
+  border:.5px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .18s;}
+.task-card:active{transform:scale(.98);}
+.task-card.state-new   {border-color:var(--border);}
+.task-card.state-active{border-color:var(--blue);}
+.task-card.state-done  {border-color:var(--green);opacity:.6;}
+.task-card.state-done .task-prog-fill{background:var(--green);}
+
+.task-inner{padding:12px 16px 8px;display:flex;align-items:center;gap:12px;}
+.task-ico{font-size:26px;flex-shrink:0;}
+.task-body{flex:1;min-width:0;}
+.task-name{font-size:14px;font-weight:700;color:var(--text1);margin-bottom:2px;}
+.task-desc{font-size:11px;color:var(--text2);line-height:1.4;}
+.task-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.task-rew{font-size:13px;font-weight:800;color:var(--gold);white-space:nowrap;}
+.task-rew2{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;}
+.task-accept-btn{background:var(--blue);border-radius:100px;padding:5px 12px;
+  font-size:12px;font-weight:700;color:#fff;white-space:nowrap;cursor:pointer;
+  transition:opacity .15s;}
+.task-accept-btn:active{opacity:.7;}
+.task-card.state-done  .task-accept-btn{display:none;}
+.task-done-ico{width:22px;height:22px;border-radius:50%;background:var(--green);
+  display:none;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+.task-card.state-done .task-done-ico{display:flex;}
+
+.task-prog-bar{height:3px;background:var(--border);}
+.task-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),#7b5eea);transition:width .4s;}
+
+.task-status-row{display:none;align-items:center;justify-content:space-between;
+  padding:5px 16px 8px;gap:8px;}
+.task-card.state-active .task-status-row,
+.task-card.state-done   .task-status-row{display:flex;}
+.task-status-source{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);flex:1;}
+.task-status-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;
+  animation:dotPulse 1.5s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.task-card.state-done .task-status-dot{background:var(--green);animation:none;}
+.task-status-val{font-size:11px;font-weight:700;color:var(--blue);white-space:nowrap;}
+.task-card.state-done .task-status-val{color:var(--green);}
+
+/* Weekly cards (в панели) */
+.week-card{margin:0 16px 10px;background:var(--card);border-radius:var(--r2);
+  border:.5px solid var(--border);cursor:pointer;transition:transform .18s;overflow:hidden;}
+.week-card:active{transform:scale(.98);}
+.wcs{flex:1;background:var(--bg3);border-radius:10px;padding:8px;text-align:center;}
+.wcs-val{font-size:14px;font-weight:800;color:var(--text1);}
+.wcs-lbl{font-size:10px;color:var(--text2);margin-top:1px;}
+.week-card-tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.06em;padding:3px 8px;border-radius:100px;margin-bottom:6px;}
+.week-card-tag.blue {background:var(--blue-dim);color:var(--blue);}
+.week-card-tag.gold {background:var(--gold-dim);color:var(--gold);}
+.week-card-tag.green{background:var(--green-dim);color:var(--green);}
+.wc-prog-row{display:flex;justify-content:space-between;margin-bottom:4px;}
+.wc-prog-lbl{font-size:11px;font-weight:600;color:var(--text2);}
+.wc-prog-val{font-size:11px;font-weight:700;color:var(--blue);}
+
+
+/* ── SHEETS ──────────────────────────────────────────── */
+.sh-ov{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .28s;}
+.sh-ov.open{opacity:1;pointer-events:all;}
+.sh-ov.open .sh{transform:translateY(0);}
+.sh{background:var(--bg2);border-radius:24px 24px 0 0;width:100%;padding:0 0 34px;
+  transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);
+  max-height:90%;overflow-y:auto;}
+.sh::-webkit-scrollbar{display:none;}
+.handle{width:36px;height:5px;background:var(--border2);border-radius:3px;margin:10px auto 0;}
+
+/* ── SCROLLABLE ──────────────────────────────────────── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+
+/* ── SHARED UI ───────────────────────────────────────── */
+.sec-title{font-size:20px;font-weight:800;color:var(--text1);letter-spacing:-.4px;padding:14px 16px 8px;}
+.sec-sub{font-size:13px;font-weight:500;color:var(--text2);padding:0 16px 10px;}
+.sec-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+.filter-row{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;}
+.filter-row::-webkit-scrollbar{display:none;}
+.fc{padding:8px 14px;border-radius:100px;font-size:13px;font-weight:600;
+  border:.5px solid var(--border2);color:var(--text2);background:var(--card);
+  cursor:pointer;white-space:nowrap;transition:all .18s;user-select:none;}
+.fc.on{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+.fc:active{opacity:.7;}
+.ev-card{margin:0 16px 10px;background:var(--card);border-radius:var(--r2);
+  border:.5px solid var(--border);padding:14px 16px;display:flex;gap:12px;cursor:pointer;transition:transform .18s;}
+.ev-card:active{transform:scale(.98);}
+.ev-l{font-size:30px;}
+.ev-r{flex:1;}
+.ev-type{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.ev-name{font-size:15px;font-weight:700;color:var(--text1);margin-bottom:3px;}
+.ev-meta{font-size:12px;color:var(--text2);}
+.ev-badge{font-size:11px;font-weight:700;color:var(--gold);background:var(--gold-dim);
+  border-radius:100px;padding:3px 8px;display:inline-block;margin-top:5px;}
+.ev-badge.blue{color:var(--blue);background:var(--blue-dim);}
+
+/* Challenge detail */
+.ch-hero{padding:20px 16px 16px;position:relative;overflow:hidden;}
+.ch-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(59,126,255,.12),transparent 60%);}
+.ch-hero.run {background:linear-gradient(160deg,#0a1a2e,#161616);}
+.ch-hero.foot{background:linear-gradient(160deg,#0a1e0a,#161616);}
+.ch-ico {font-size:52px;margin-bottom:10px;position:relative;}
+.ch-name{font-size:22px;font-weight:900;color:var(--text1);letter-spacing:-.4px;position:relative;}
+.ch-type{font-size:13px;font-weight:600;margin-top:4px;position:relative;}
+.ch-stats-row{display:flex;gap:8px;margin-top:14px;position:relative;}
+.ch-s{flex:1;background:rgba(255,255,255,.07);border-radius:var(--r);padding:10px;text-align:center;}
+.ch-s-val{font-size:18px;font-weight:800;color:var(--text1);}
+.ch-s-lbl{font-size:10px;color:var(--text2);margin-top:2px;}
+.ch-sec{padding:12px 16px 0;}
+.rew-row{display:flex;gap:8px;}
+.rew-it{flex:1;background:var(--card);border-radius:var(--r);padding:12px;border:.5px solid var(--border);}
+.rew-it-ico{font-size:22px;margin-bottom:5px;}
+.rew-it-val{font-size:16px;font-weight:800;color:var(--text1);}
+.rew-it-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+.city-impact{background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r);
+  padding:14px;display:flex;align-items:center;gap:12px;}
+.ci-ico{font-size:26px;}
+.ci-title{font-size:14px;font-weight:700;color:var(--text1);}
+.ci-sub{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4;}
+.join-btn{margin:14px 16px 0;height:52px;border-radius:100px;background:var(--blue);
+  cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;box-shadow:0 4px 20px rgba(59,126,255,.4);transition:all .18s;}
+.join-btn:active{transform:scale(.97);opacity:.88;}
+.join-btn.gold-btn{background:var(--gold);box-shadow:0 4px 20px rgba(245,166,35,.4);}
+
+/* CTA */
+.cta{margin:10px 16px;height:52px;border-radius:100px;background:var(--blue);cursor:pointer;
+  user-select:none;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;box-shadow:0 4px 20px rgba(59,126,255,.4);transition:all .18s;flex-shrink:0;}
+.cta:active{transform:scale(.97);opacity:.88;}
+.cta.sec{background:transparent;box-shadow:none;border:1px solid var(--border2);color:var(--text2);}
+
+/* Leaderboard */
+.lb-wrap{padding:0 16px;}
+.lb-my{background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r);
+  padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.lb-rank{font-size:28px;font-weight:900;color:var(--blue);min-width:34px;}
+.lb-ci{flex:1;}
+.lb-cn{font-size:16px;font-weight:700;color:var(--text1);}
+.lb-cp{font-size:13px;color:var(--blue);margin-top:2px;}
+.lb-trend{font-size:13px;font-weight:700;color:var(--green);}
+.lb-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:.5px solid var(--border);}
+.lb-row:last-child{border-bottom:none;}
+.lb-n{font-size:14px;font-weight:700;color:var(--text3);min-width:22px;text-align:center;}
+.lb-n.t{color:var(--gold);}
+.lb-cf{font-size:20px;}
+.lb-cm{flex:1;}
+.lb-nm{font-size:15px;font-weight:600;color:var(--text1);}
+.lb-sp{font-size:11px;color:var(--text2);margin-top:2px;}
+.lb-pts{font-size:13px;font-weight:700;color:var(--text2);}
+.lb-bar{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;width:70px;}
+.lb-bf{height:100%;border-radius:2px;background:var(--blue);}
+.lb-hi{background:var(--blue-dim);border:.5px solid var(--blue);border-radius:var(--r);padding:11px;}
+.div{height:.5px;background:var(--border);margin:2px 16px;}
+.pt{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pf{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),#7b5eea);}
+
+/* City profile */
+.city-hero-h{background:linear-gradient(160deg,#0c1a3a,#161616);padding:20px 16px 16px;position:relative;overflow:hidden;}
+.city-hero-h::before{content:'';position:absolute;right:-20px;top:-20px;width:160px;height:160px;
+  border-radius:50%;background:radial-gradient(circle,rgba(59,126,255,.15),transparent);}
+.ch-flag{font-size:44px;margin-bottom:8px;}
+.ch-city-name{font-size:26px;font-weight:900;color:var(--text1);letter-spacing:-.5px;}
+.ch-city-sub{font-size:14px;color:var(--text2);margin-top:4px;}
+.ch-city-stats{display:flex;gap:8px;margin-top:14px;}
+.ccs{flex:1;background:rgba(255,255,255,.06);border-radius:var(--r);padding:10px;text-align:center;}
+.ccs-val{font-size:18px;font-weight:800;color:var(--text1);}
+.ccs-lbl{font-size:10px;color:var(--text2);margin-top:2px;}
+.sport-bars{padding:0 16px;}
+.sbr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sb-ico{font-size:17px;width:22px;text-align:center;}
+.sb-nm{font-size:13px;font-weight:600;color:var(--text1);min-width:68px;}
+.sb-t{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.sb-f{height:100%;border-radius:4px;}
+.sb-pct{font-size:12px;font-weight:700;color:var(--text2);min-width:30px;text-align:right;}
+.badges{display:flex;gap:8px;padding:0 16px;overflow-x:auto;margin-bottom:12px;}
+.badges::-webkit-scrollbar{display:none;}
+.badge{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.badge-ico{font-size:26px;}
+.badge-lbl{font-size:9px;font-weight:600;color:var(--text2);}
+
+/* Reward popup */
+.task-reward-pop{position:absolute;inset:0;z-index:250;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px;opacity:0;pointer-events:none;transition:opacity .25s;}
+.task-reward-pop.show{opacity:1;pointer-events:all;}
+.pop-emoji{font-size:72px;animation:popIn .5s .05s cubic-bezier(.17,.67,.3,1.3) both;}
+@keyframes popIn{0%{transform:scale(0) rotate(-10deg);}70%{transform:scale(1.15) rotate(2deg);}100%{transform:scale(1) rotate(0);}}
+.pop-title{font-size:22px;font-weight:900;color:var(--text1);text-align:center;letter-spacing:-.4px;margin:14px 0 6px;}
+.pop-sub{font-size:14px;color:var(--text2);text-align:center;line-height:1.5;margin-bottom:20px;}
+.pop-rewards{display:flex;gap:8px;width:100%;margin-bottom:18px;}
+.pop-r{flex:1;background:var(--card);border-radius:var(--r);padding:12px;border:.5px solid var(--border);text-align:center;}
+.pop-r-ico{font-size:22px;margin-bottom:4px;}
+.pop-r-val{font-size:16px;font-weight:800;color:var(--text1);}
+.pop-r-lbl{font-size:10px;color:var(--text2);margin-top:2px;}
+.pop-city{background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r);
+  padding:12px;width:100%;display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.pop-city-ico{font-size:20px;}
+.pop-city-txt{font-size:13px;color:var(--blue);font-weight:600;line-height:1.4;}
+
+/* District */
+.district-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:.5px solid var(--border);}
+.district-row:last-child{border-bottom:none;}
+.dist-n{font-size:14px;font-weight:700;color:var(--text3);min-width:20px;text-align:center;}
+.dist-n.t{color:var(--gold);}
+.dist-name{flex:1;font-size:14px;font-weight:600;color:var(--text1);}
+.dist-sport{font-size:11px;color:var(--text2);}
+.dist-pts{font-size:13px;font-weight:700;color:var(--text2);}
+.dist-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px;overflow:hidden;width:60px;}
+.dist-bf{height:100%;border-radius:2px;background:var(--blue);}
+
+/* ── CHALLENGE SCREEN ────────────────────────────────── */
+.ch-tabs{display:flex;gap:0;padding:0 16px 12px;flex-shrink:0;}
+.ch-tab{flex:1;padding:9px 4px;text-align:center;font-size:13px;font-weight:600;
+  color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;user-select:none;}
+.ch-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.streak-banner{margin:0 16px 12px;background:linear-gradient(120deg,#1a1000,#1e1200);
+  border:1px solid var(--gold);border-radius:var(--r2);padding:12px 16px;
+  display:flex;align-items:center;gap:12px;}
+.streak-fire{font-size:28px;}
+.streak-info{flex:1;}
+.streak-title{font-size:14px;font-weight:800;color:var(--gold);}
+.streak-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.streak-count{font-size:28px;font-weight:900;color:var(--gold);}
+.season-bar{margin:0 16px 12px;background:var(--card);border-radius:var(--r);
+  padding:12px 14px;border:.5px solid var(--border);display:flex;align-items:center;gap:10px;}
+
+/* Map zoom label */
+.zoom-lbl{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:700;color:var(--text3);padding:3px 0;pointer-events:none;}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+
+<!-- ═══ ARENA MAP ════════════════════════════════════════ -->
+<div class="screen active" id="s-arena">
+  <div class="sbar">
+    <span class="sbar-time">9:41</span>
+    <div class="sbar-r">
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity=".3"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 2.4C10.8 2.4 13.3 3.6 15 5.6L16 4.5C14 2.2 11.2.8 8 .8S2 2.2 0 4.5L1 5.6C2.7 3.6 5.2 2.4 8 2.4z"/><path d="M8 5.6C9.8 5.6 11.4 6.4 12.5 7.7L13.5 6.6C12.1 5 10.2 4 8 4S3.9 5 2.5 6.6L3.5 7.7C4.6 6.4 6.2 5.6 8 5.6z"/><circle cx="8" cy="10" r="2"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="white"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-width="1" fill="none" opacity=".35"/><rect x="1.5" y="2.5" width="17" height="7" rx="2" fill="white"/><path d="M23 4v4c1.1-.5 1.1-3.5 0-4z" fill="white" opacity=".4"/></svg>
+    </div>
+  </div>
+
+  <div class="map-wrap" id="map-wrap">
+    <div class="map-canvas" id="map-canvas">
+      <div class="map-bg-tile"></div>
+      <div class="map-grid-tile"></div>
+      <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 1200 1200">
+        <path d="M0 300 L1200 280" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M0 560 L1200 540" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M0 820 L1200 800" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M200 0 L220 1200" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M550 0 L560 1200" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M900 0 L880 1200" stroke="#272727" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <path d="M0 160 L1200 170" stroke="#1f1f1f" stroke-width="13" fill="none"/>
+        <path d="M0 430 L1200 415" stroke="#1f1f1f" stroke-width="13" fill="none"/>
+        <path d="M0 680 Q600 660 1200 680" stroke="#1f1f1f" stroke-width="11" fill="none"/>
+        <path d="M0 960 L1200 945" stroke="#1f1f1f" stroke-width="13" fill="none"/>
+        <path d="M90 0 L100 1200" stroke="#1f1f1f" stroke-width="10" fill="none"/>
+        <path d="M380 0 L370 1200" stroke="#1f1f1f" stroke-width="10" fill="none"/>
+        <path d="M740 0 L730 1200" stroke="#1f1f1f" stroke-width="10" fill="none"/>
+        <path d="M1060 0 L1050 1200" stroke="#1f1f1f" stroke-width="10" fill="none"/>
+        <path d="M0 70 L1200 80" stroke="#1b1b1b" stroke-width="6" fill="none"/>
+        <path d="M460 0 L455 1200" stroke="#1b1b1b" stroke-width="6" fill="none"/>
+        <path d="M670 0 L665 1200" stroke="#1b1b1b" stroke-width="6" fill="none"/>
+        <path d="M0 750 Q300 730 600 745 Q900 760 1200 740" stroke="#1b1b1b" stroke-width="6" fill="none"/>
+        <rect x="240" y="340" width="80" height="60" rx="4" fill="#1d1d1d"/>
+        <rect x="340" y="340" width="60" height="60" rx="4" fill="#1c1c1c"/>
+        <rect x="600" y="300" width="100" height="80" rx="4" fill="#1d1d1d"/>
+        <rect x="620" y="600" width="70" height="55" rx="4" fill="#1c1c1c"/>
+        <rect x="240" y="620" width="90" height="50" rx="4" fill="#1d1d1d"/>
+        <rect x="900" y="340" width="80" height="60" rx="4" fill="#1c1c1c"/>
+        <rect x="900" y="600" width="60" height="70" rx="4" fill="#1d1d1d"/>
+      </svg>
+
+      <!-- Pulse dots -->
+      <div class="pd" style="left:32%;top:44%;"></div>
+      <div class="pd" style="left:68%;top:30%;animation-delay:.7s"></div>
+      <div class="pd" style="left:51%;top:61%;animation-delay:1.3s"></div>
+      <div class="pd" style="left:20%;top:20%;animation-delay:.4s"></div>
+      <div class="pd" style="left:79%;top:72%;animation-delay:1s"></div>
+      <div class="pd" style="left:13%;top:58%;animation-delay:.2s"></div>
+      <div class="pd" style="left:88%;top:40%;animation-delay:1.6s"></div>
+      <div class="pd" style="left:42%;top:78%;animation-delay:.9s"></div>
+
+      <!-- Zones -->
+      <div class="zone" style="left:56%;top:38%;width:90px;height:90px;" onclick="openSh('sh-ch1')"></div>
+      <div class="zone" style="left:28%;top:60%;width:70px;height:70px;border-color:var(--gold);background:var(--gold-dim);animation-delay:.8s" onclick="openSh('sh-ch2')"></div>
+      <div class="zone" style="left:76%;top:24%;width:60px;height:60px;border-color:var(--green);background:var(--green-dim);animation-delay:1.2s"></div>
+
+      <!-- Bonus zone -->
+      <div class="bonus-zone" style="left:42%;top:72%;width:66px;height:66px;" onclick="openSh('sh-bonus')">
+        <span style="font-size:18px;font-weight:800;color:var(--gold)">x2</span>
+      </div>
+
+      <!-- Stadium -->
+      <div style="position:absolute;left:56%;top:26%;transform:translate(-50%,-50%);cursor:pointer;z-index:6;" onclick="openSh('sh-ch1')">
+        <span style="font-size:44px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.7))">🏟️</span>
+      </div>
+
+      <!-- Pins -->
+      <div class="pin b" style="left:55%;top:35%;" onclick="openSh('sh-ch1')">
+        <div class="pin-body b"><span class="pin-ico">🏃</span><span class="pin-txt">Марафон «Москва»</span></div>
+      </div>
+      <div class="pin g" style="left:27%;top:57%;" onclick="openSh('sh-ch2')">
+        <div class="pin-body g"><span class="pin-ico">⚽</span><span class="pin-txt">Турнир во дворе</span></div>
+      </div>
+      <div class="pin" style="left:76%;top:20%;">
+        <div class="pin-body" style="border-color:var(--green);background:#0a1e0a"><span class="pin-ico">🚴</span><span class="pin-txt" style="color:var(--green)">Велозаезд</span></div>
+      </div>
+      <div class="pin" style="left:18%;top:42%;">
+        <div class="pin-body"><span class="pin-ico">💪</span><span class="pin-txt">Воркаут-зона</span></div>
+      </div>
+
+      <!-- User -->
+      <div style="position:absolute;left:51%;top:54%;transform:translate(-50%,-100%);z-index:10;pointer-events:none;">
+        <span style="font-size:30px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))">📍</span>
+      </div>
+    </div>
+
+    <!-- HUD top -->
+    <div class="hud-top">
+      <div class="ava" onclick="goTo('s-city-profile')">М</div>
+      <div class="chips">
+        <div class="chip" onclick="goTo('s-leaderboard')"><span class="chip-ico">🏅</span><span class="chip-val" id="oa-counter">114</span></div>
+        <div class="chip" onclick="goTo('s-leaderboard')"><span class="chip-ico">💰</span><span class="chip-val" id="coin-counter">340</span></div>
+      </div>
+    </div>
+
+    <!-- Map controls -->
+    <div class="map-ctrls">
+      <div class="mc" onclick="zoomMap(.25)">+</div>
+      <div class="mc" onclick="zoomMap(-.25)">−</div>
+      <div class="mc" style="margin-top:4px;font-size:13px" onclick="resetMap()">◎</div>
+      <div class="zoom-lbl" id="zoom-lbl">1×</div>
+    </div>
+
+    <!-- HUD bot -->
+    <div class="hud-bot" id="hud-bot-main">
+      <div class="city-bar" onclick="goTo('s-city-profile')">
+        <span class="city-flag">🏙️</span>
+        <div class="city-info">
+          <div class="city-nm">Москва</div>
+          <div class="city-sub">2 147 участников сегодня</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:95px">
+          <div class="city-rank">#3 в России</div>
+          <div class="prog-t" style="width:88px"><div class="prog-f" style="width:67%"></div></div>
+        </div>
+      </div>
+      <div class="list-btn" onclick="openSh('sh-explore')">Показать списком (12)</div>
+    </div>
+  </div>
+
+  <!-- TASKS PANEL -->
+  <div class="tasks-panel" id="tasks-panel">
+    <div class="tasks-handle" id="tasks-handle" onclick="toggleTasksPanel()">
+      <div class="tasks-handle-bar"></div>
+      <div class="tasks-handle-content">
+        <div class="tasks-handle-left">
+          <span class="tasks-handle-ico">⚡</span>
+          <div>
+            <div class="tasks-handle-title">Задания на сегодня</div>
+            <div class="tasks-handle-sub">2 из 4 выполнено · Стрик 🔥7</div>
+          </div>
+        </div>
+        <div class="tasks-handle-right">
+          <div class="tasks-day-prog">
+            <div class="tasks-day-seg done"></div>
+            <div class="tasks-day-seg done"></div>
+            <div class="tasks-day-seg"></div>
+            <div class="tasks-day-seg"></div>
+          </div>
+          <div class="tasks-handle-oa" id="panel-oa-display">+120 ОА</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tasks-expanded" id="tasks-expanded">
+      <!-- Header -->
+      <div class="tasks-exp-header">
+        <div>
+          <div class="tasks-exp-title">Мои задания</div>
+          <div class="tasks-exp-sub">Уровень 4 · <span style="color:var(--blue)">Активный участник</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="chip" style="padding:6px 10px"><span class="chip-ico">🏅</span><span class="chip-val" id="oa-counter2" style="font-size:13px">114</span></div>
+          <div class="chip" style="padding:6px 10px;background:linear-gradient(135deg,#1a1000,#1e1200);border-color:var(--gold)"><span class="chip-ico">💎</span><span class="chip-val" style="color:var(--gold);font-size:13px" id="coin-counter2">340</span></div>
+        </div>
+      </div>
+
+      <!-- Streak -->
+      <div class="tasks-streak">
+        <span style="font-size:20px">🔥</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">Стрик 7 дней · ×1.5 к очкам района</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px">Не прерывай — выполни хотя бы 1 задание сегодня</div>
+        </div>
+        <div style="font-size:24px;font-weight:900;color:var(--gold)">7</div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tasks-tabs">
+        <div class="tasks-tab on" onclick="switchPanelTab(this,'ptab-daily')">Ежедневные</div>
+        <div class="tasks-tab" onclick="switchPanelTab(this,'ptab-weekly')">Недельные</div>
+        <div class="tasks-tab" onclick="switchPanelTab(this,'ptab-city')">Город</div>
+      </div>
+
+      <!-- DAILY TAB -->
+      <div class="tasks-tab-body" id="ptab-daily">
+        <div style="display:flex;justify-content:space-between;padding:0 16px 8px;flex-shrink:0">
+          <div style="font-size:11px;color:var(--text2)">Ежедневные задания</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text2)" id="panel-done-count">2 / 4 выполнено</div>
+        </div>
+
+        <!-- DONE -->
+        <div class="task-card state-done" id="pt1">
+          <div class="task-inner">
+            <div class="task-ico">🚶</div>
+            <div class="task-body"><div class="task-name">10 000 шагов</div><div class="task-desc">📱 iPhone · Педометр</div></div>
+            <div class="task-right"><div class="task-rew">+40 ОА</div><div class="task-rew2">+💎15</div><div class="task-done-ico">✓</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" style="width:100%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div>iPhone засчитал · 10 241 шаг</div>
+            <div class="task-status-val">✓ Готово</div>
+          </div>
+        </div>
+
+        <!-- DONE -->
+        <div class="task-card state-done" id="pt2">
+          <div class="task-inner">
+            <div class="task-ico">🏃</div>
+            <div class="task-body"><div class="task-name">Пробеги 3 км</div><div class="task-desc">📱 GPS · HealthKit</div></div>
+            <div class="task-right"><div class="task-rew">+60 ОА</div><div class="task-rew2">+💎25</div><div class="task-done-ico">✓</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" style="width:100%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div>GPS зафиксировал · 3.4 км</div>
+            <div class="task-status-val">✓ Готово</div>
+          </div>
+        </div>
+
+        <!-- ACTIVE -->
+        <div class="task-card state-active" id="pt3">
+          <div class="task-inner">
+            <div class="task-ico">🔥</div>
+            <div class="task-body"><div class="task-name">Тренировка 30 мин</div><div class="task-desc">📱 HealthKit · Любой тип</div></div>
+            <div class="task-right"><div class="task-rew">+70 ОА</div><div class="task-rew2">+💎30</div><div class="task-done-ico">✓</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" id="pp-pt3" style="width:60%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div><span id="pp-pt3-src">📱 HealthKit · 18 из 30 мин</span></div>
+            <div class="task-status-val" id="pp-pt3-val">60%</div>
+          </div>
+        </div>
+
+        <!-- NEW -->
+        <div class="task-card state-new" id="pt4">
+          <div class="task-inner">
+            <div class="task-ico">⚡</div>
+            <div class="task-body"><div class="task-name">Сожги 300 ккал</div><div class="task-desc">⌚ Apple Watch · Кольца активности</div></div>
+            <div class="task-right">
+              <div class="task-rew">+50 ОА</div><div class="task-rew2">+💎20</div>
+              <div class="task-accept-btn" onclick="acceptTask('pt4',50,20,12,'Сожги 300 ккал','⚡','⌚ Apple Watch','ккал',300,0);event.stopPropagation()">Принять</div>
+            </div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" id="pp-pt4" style="width:0%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div><span id="pp-pt4-src">Нажми «Принять» → Watch начнёт считывать</span></div>
+            <div class="task-status-val" id="pp-pt4-val"></div>
+          </div>
+        </div>
+
+        <div style="margin:6px 16px 4px;background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r);padding:11px 14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px">🏙️</span>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text1)">Твой вклад сегодня</div>
+          <div style="font-size:11px;color:var(--blue);margin-top:2px">+100 ОА Москве · Сокольники +150 (стрик ×1.5)</div></div>
+        </div>
+      </div>
+
+      <!-- WEEKLY TAB -->
+      <div class="tasks-tab-body" id="ptab-weekly" style="display:none">
+        <div style="padding:0 16px 8px;font-size:11px;color:var(--text2);flex-shrink:0">Недельные задания</div>
+
+        <!-- ACTIVE: km -->
+        <div class="task-card state-active" style="margin:0 16px 10px" id="pw1">
+          <div class="task-inner">
+            <div class="task-ico">🏃</div>
+            <div class="task-body"><div class="task-name">Набегай 30 км за неделю</div><div class="task-desc">📱 GPS + HealthKit</div></div>
+            <div class="task-right"><div class="task-rew">+500 ОА</div><div class="task-rew2">+💎200</div><div class="task-done-ico">✓</div></div>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 16px 8px">
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">18.4</div><div class="wcs-lbl">из 30 км</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">+500 ОА</div><div class="wcs-lbl">Награда</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">3 дня</div><div class="wcs-lbl">осталось</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" id="pp-pw1" style="width:61%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div><span id="pp-pw1-src">📱 GPS · 18.4 из 30 км</span></div>
+            <div class="task-status-val" id="pp-pw1-val">61%</div>
+          </div>
+        </div>
+
+        <!-- NEW: calories -->
+        <div class="task-card state-new" style="margin:0 16px 10px" id="pw3">
+          <div class="task-inner">
+            <div class="task-ico">⚡</div>
+            <div class="task-body"><div class="task-name">Сожги 2 000 ккал за неделю</div><div class="task-desc">⌚ Apple Watch · Кольца активности</div></div>
+            <div class="task-right">
+              <div class="task-rew">+300 ОА</div><div class="task-rew2">+💎120</div>
+              <div class="task-accept-btn" onclick="acceptTask('pw3',300,120,50,'Сожги 2000 ккал','⚡','⌚ Apple Watch','ккал',2000,640);event.stopPropagation()">Принять</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 16px 8px">
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">0</div><div class="wcs-lbl">из 2000 ккал</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">+300 ОА</div><div class="wcs-lbl">Награда</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">💎120</div><div class="wcs-lbl">монеты</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" id="pp-pw3" style="width:0%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div><span id="pp-pw3-src">Нажми «Принять» → Watch начнёт суммировать</span></div>
+            <div class="task-status-val" id="pp-pw3-val"></div>
+          </div>
+        </div>
+
+        <!-- NEW: steps -->
+        <div class="task-card state-new" style="margin:0 16px 10px" id="pw4">
+          <div class="task-inner">
+            <div class="task-ico">🚶</div>
+            <div class="task-body"><div class="task-name">70 000 шагов за неделю</div><div class="task-desc">📱 iPhone · Педометр · ~10 000/день</div></div>
+            <div class="task-right">
+              <div class="task-rew">+250 ОА</div><div class="task-rew2">+💎100</div>
+              <div class="task-accept-btn" onclick="acceptTask('pw4',250,100,35,'70 000 шагов','🚶','📱 iPhone','шагов',70000,0);event.stopPropagation()">Принять</div>
+            </div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" id="pp-pw4" style="width:0%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div><span id="pp-pw4-src">Нажми «Принять» → педометр начнёт суммировать</span></div>
+            <div class="task-status-val" id="pp-pw4-val"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CITY TAB -->
+      <div class="tasks-tab-body" id="ptab-city" style="display:none">
+        <div style="margin:0 16px 10px;background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0" onclick="goTo('s-city-profile')">
+          <div style="font-size:24px;font-weight:900;color:var(--blue)">#4</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--text1)">Сокольники · твой район</div>
+            <div style="font-size:11px;color:var(--blue);margin-top:2px">24 180 ОА · 71% до #3 места</div>
+            <div class="prog-t" style="margin-top:5px"><div class="pf" style="width:71%"></div></div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--green)">↑ +1 ›</div>
+        </div>
+
+        <!-- ACTIVE: marathon -->
+        <div class="task-card state-active" style="margin:0 16px 10px" id="city1">
+          <div class="task-inner">
+            <div class="task-ico">🏙️</div>
+            <div class="task-body"><div class="task-name">Марафон «Москва»</div><div class="task-desc">📱 GPS · 1 247 участников · Коллективный</div></div>
+            <div class="task-right"><div class="task-rew">+500 ОА</div><div class="task-rew2">+💎150</div><div class="task-done-ico">✓</div></div>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 16px 8px">
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">18.4 км</div><div class="wcs-lbl">твой вклад</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">94 820</div><div class="wcs-lbl">км всего</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">6 дней</div><div class="wcs-lbl">осталось</div></div>
+          </div>
+          <div class="task-prog-bar"><div class="task-prog-fill" style="width:63%"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot"></div>GPS · 94 820 / 150 000 км — вся Москва</div>
+            <div class="task-status-val">63%</div>
+          </div>
+        </div>
+
+        <!-- NEW: battle -->
+        <div class="task-card state-new" style="margin:0 16px 10px" id="city2">
+          <div class="task-inner">
+            <div class="task-ico">⚔️</div>
+            <div class="task-body"><div class="task-name">Битва районов</div><div class="task-desc">📱 GPS + HealthKit · Сокольники vs Арбат</div></div>
+            <div class="task-right">
+              <div class="task-rew">+600 ОА</div>
+              <div class="task-rew2" style="color:var(--gold)">×2 бонус</div>
+              <div class="task-accept-btn" style="background:var(--gold);color:#161616" onclick="acceptTask('city2',600,250,100,'Битва районов','⚔️','📱 GPS + HealthKit','ОА',1000,0);event.stopPropagation()">Принять</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 16px 8px">
+            <div class="wcs" style="padding:6px 8px;background:var(--gold-dim);border:.5px solid var(--gold)"><div class="wcs-val" style="font-size:13px;color:var(--gold)">×2</div><div class="wcs-lbl">бонус ОА</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">14 дн.</div><div class="wcs-lbl">осталось</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">+600 ОА</div><div class="wcs-lbl">победителям</div></div>
+          </div>
+          <div class="task-prog-bar" style="background:var(--gold-dim)"><div class="task-prog-fill" id="pp-city2" style="width:0%;background:var(--gold)"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot" style="background:var(--gold)"></div><span id="pp-city2-src">Нажми «Принять» → тренировки идут в зачёт</span></div>
+            <div class="task-status-val" id="pp-city2-val"></div>
+          </div>
+        </div>
+
+        <!-- NEW: explore -->
+        <div class="task-card state-new" style="margin:0 16px 10px" id="city3">
+          <div class="task-inner">
+            <div class="task-ico">🗺️</div>
+            <div class="task-body"><div class="task-name">Изучи 5 спортивных зон</div><div class="task-desc">📍 GPS · Посети зоны на карте Арены</div></div>
+            <div class="task-right">
+              <div class="task-rew">+200 ОА</div>
+              <div class="task-rew2" style="color:var(--green)">+💎80</div>
+              <div class="task-accept-btn" style="background:var(--green);color:#161616" onclick="acceptTask('city3',200,80,40,'Изучи 5 спортзон','🗺️','📍 GPS локации','зон',5,0);event.stopPropagation()">Принять</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 16px 8px">
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">0 / 5</div><div class="wcs-lbl">зон</div></div>
+            <div class="wcs" style="padding:6px 8px"><div class="wcs-val" style="font-size:13px">+200 ОА</div><div class="wcs-lbl">Награда</div></div>
+            <div class="wcs" style="padding:6px 8px;background:var(--green-dim);border:.5px solid var(--green)"><div class="wcs-val" style="font-size:13px;color:var(--green)">💎80</div><div class="wcs-lbl">монеты</div></div>
+          </div>
+          <div class="task-prog-bar" style="background:var(--green-dim)"><div class="task-prog-fill" id="pp-city3" style="width:0%;background:var(--green)"></div></div>
+          <div class="task-status-row">
+            <div class="task-status-source"><div class="task-status-dot" style="background:var(--green)"></div><span id="pp-city3-src">Нажми «Принять» → GPS начнёт отмечать</span></div>
+            <div class="task-status-val" id="pp-city3-val"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tasks-expanded -->
+  </div><!-- /tasks-panel -->
+
+  <!-- Tabbar -->
+  <div class="tabbar">
+    <div class="tab" onclick="goTo('s-feed')"><span class="tab-ico">📰</span><span class="tab-lbl">Лента</span></div>
+    <div class="tab" onclick="goTo('s-feed')"><span class="tab-ico">🎬</span><span class="tab-lbl">Reels</span></div>
+    <div class="tab active"><span class="tab-ico">🏟️</span><span class="tab-lbl" style="color:var(--blue)">Арена</span></div>
+    <div class="tab" onclick="goTo('s-feed')"><span class="tab-ico">💘</span><span class="tab-lbl">Dating</span></div>
+    <div class="tab" onclick="goTo('s-feed')"><span class="tab-ico">⚡</span><span class="tab-lbl">Strava</span></div>
+  </div>
+
+  <!-- Sheet: Explore -->
+  <div class="sh-ov" id="sh-explore" onclick="closeSh('sh-explore',event)">
+    <div class="sh">
+      <div class="handle"></div>
+      <div class="sec-title">Активности в Москве</div>
+      <div class="filter-row">
+        <div class="fc on">Все</div>
+        <div class="fc" onclick="swapChip(this)">🏃 Бег</div>
+        <div class="fc" onclick="swapChip(this)">⚽ Командные</div>
+        <div class="fc" onclick="swapChip(this)">💪 Силовые</div>
+        <div class="fc" onclick="swapChip(this)">🚴 Велоспорт</div>
+      </div>
+      <div class="ev-card" onclick="closeSh('sh-explore');openSh('sh-ch1')">
+        <div class="ev-l">🏃</div>
+        <div class="ev-r"><div class="ev-type">Челлендж · Активен</div><div class="ev-name">Марафон «Москва»</div><div class="ev-meta">📍 Парк Горького · Начало: сегодня</div><div class="ev-badge">+500 очков для города</div></div>
+      </div>
+      <div class="ev-card" onclick="closeSh('sh-explore');openSh('sh-ch2')">
+        <div class="ev-l">⚽</div>
+        <div class="ev-r"><div class="ev-type" style="color:var(--gold)">Событие · Завтра</div><div class="ev-name">Дворовой турнир по футболу</div><div class="ev-meta">📍 Сокольники · 12 команд</div><div class="ev-badge">🏆 Золотое достижение</div></div>
+      </div>
+      <div class="ev-card" onclick="closeSh('sh-explore')">
+        <div class="ev-l">🚴</div>
+        <div class="ev-r"><div class="ev-type">Маршрут · Групповой</div><div class="ev-name">Велозаезд по набережной</div><div class="ev-meta">📍 Крымская набережная · 47 км</div><div class="ev-badge blue">+200 очков для города</div></div>
+      </div>
+      <div class="ev-card" onclick="closeSh('sh-explore')">
+        <div class="ev-l">💪</div>
+        <div class="ev-r"><div class="ev-type">Зона · Постоянная</div><div class="ev-name">Воркаут-зона Лужники</div><div class="ev-meta">📍 Лужники · Открыто сейчас</div><div class="ev-badge blue">+50 очков за визит</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sheet: Challenge 1 -->
+  <div class="sh-ov" id="sh-ch1" onclick="closeSh('sh-ch1',event)">
+    <div class="sh">
+      <div class="handle"></div>
+      <div class="ch-hero run">
+        <div class="ch-ico">🏃</div>
+        <div class="ch-name">Марафон «Москва»</div>
+        <div class="ch-type" style="color:var(--blue)">НЕДЕЛЬНЫЙ ЧЕЛЛЕНДЖ</div>
+        <div class="ch-stats-row">
+          <div class="ch-s"><div class="ch-s-val">42 км</div><div class="ch-s-lbl">Дистанция</div></div>
+          <div class="ch-s"><div class="ch-s-val">7 дней</div><div class="ch-s-lbl">Срок</div></div>
+          <div class="ch-s"><div class="ch-s-val">1 247</div><div class="ch-s-lbl">Участников</div></div>
+        </div>
+      </div>
+      <div class="ch-sec"><div class="sec-label" style="margin-bottom:6px">Задание</div>
+        <div style="font-size:14px;color:var(--text1);line-height:1.6;">Пробеги суммарно 42 км за 7 дней. Маршрут любой — считается каждый километр.</div></div>
+      <div class="ch-sec" style="margin-top:12px"><div class="sec-label" style="margin-bottom:8px">Награда</div>
+        <div class="rew-row">
+          <div class="rew-it"><div class="rew-it-ico">🏅</div><div class="rew-it-val">+500</div><div class="rew-it-lbl">Медали</div></div>
+          <div class="rew-it"><div class="rew-it-ico">💰</div><div class="rew-it-val">+2 500</div><div class="rew-it-lbl">Монеты</div></div>
+          <div class="rew-it"><div class="rew-it-ico">🎖️</div><div class="rew-it-val">Значок</div><div class="rew-it-lbl">«Марафонец»</div></div>
+        </div>
+      </div>
+      <div class="ch-sec" style="margin-top:12px;margin-bottom:12px"><div class="sec-label" style="margin-bottom:8px">Вклад в город</div>
+        <div class="city-impact">
+          <div class="ci-ico">🏙️</div>
+          <div><div class="ci-title">Москва получит +500 очков</div><div class="ci-sub">Каждый участник двигает Москву к #2.</div></div>
+        </div>
+      </div>
+      <div class="join-btn" onclick="closeSh('sh-ch1');startChallenge()">Принять челлендж</div>
+      <div class="cta sec" style="margin-top:6px" onclick="closeSh('sh-ch1')">Отмена</div>
+    </div>
+  </div>
+
+  <!-- Sheet: Challenge 2 -->
+  <div class="sh-ov" id="sh-ch2" onclick="closeSh('sh-ch2',event)">
+    <div class="sh">
+      <div class="handle"></div>
+      <div class="ch-hero foot">
+        <div class="ch-ico">⚽</div>
+        <div class="ch-name">Дворовой турнир</div>
+        <div class="ch-type" style="color:var(--gold)">ЗОЛОТОЕ СОБЫТИЕ</div>
+        <div class="ch-stats-row">
+          <div class="ch-s"><div class="ch-s-val">5 vs 5</div><div class="ch-s-lbl">Формат</div></div>
+          <div class="ch-s"><div class="ch-s-val">Завтра</div><div class="ch-s-lbl">Начало</div></div>
+          <div class="ch-s"><div class="ch-s-val">12</div><div class="ch-s-lbl">Команд</div></div>
+        </div>
+      </div>
+      <div class="ch-sec"><div class="sec-label" style="margin-bottom:6px">Задание</div>
+        <div style="font-size:14px;color:var(--text1);line-height:1.6;">Запишись и сыграй в турнире. Победа в матче приносит очки тебе и городу.</div></div>
+      <div class="ch-sec" style="margin-top:12px"><div class="sec-label" style="margin-bottom:8px">Награда</div>
+        <div class="rew-row">
+          <div class="rew-it"><div class="rew-it-ico">🏅</div><div class="rew-it-val">+300</div><div class="rew-it-lbl">Медали</div></div>
+          <div class="rew-it"><div class="rew-it-ico">🏆</div><div class="rew-it-val">Кубок</div><div class="rew-it-lbl">«Дворовой»</div></div>
+          <div class="rew-it"><div class="rew-it-ico">💰</div><div class="rew-it-val">+1 500</div><div class="rew-it-lbl">Монеты</div></div>
+        </div>
+      </div>
+      <div class="ch-sec" style="margin-top:12px;margin-bottom:12px"><div class="sec-label" style="margin-bottom:8px">Вклад в город</div>
+        <div class="city-impact" style="background:var(--gold-dim);border-color:var(--gold)">
+          <div class="ci-ico">⚽</div>
+          <div><div class="ci-title" style="color:var(--gold)">+300 очков для Москвы</div><div class="ci-sub">Футбол — топ-2 вида спорта Москвы.</div></div>
+        </div>
+      </div>
+      <div class="join-btn gold-btn" onclick="closeSh('sh-ch2');startChallenge()">Записаться в турнир</div>
+      <div class="cta sec" style="margin-top:6px" onclick="closeSh('sh-ch2')">Отмена</div>
+    </div>
+  </div>
+
+  <!-- Sheet: Bonus zone -->
+  <div class="sh-ov" id="sh-bonus" onclick="closeSh('sh-bonus',event)">
+    <div class="sh">
+      <div class="handle"></div>
+      <div style="padding:16px 16px 4px">
+        <div style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🌟 Бонусная зона</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text1);margin-bottom:6px">Парк Сокольники</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:14px">Сейчас в этой зоне все очки удваиваются! Зайди и потренируйся здесь.</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div class="wcs" style="background:var(--gold-dim);border:.5px solid var(--gold)"><div class="wcs-val" style="color:var(--gold)">×2</div><div class="wcs-lbl">Бонус очков</div></div>
+          <div class="wcs"><div class="wcs-val">3ч 20м</div><div class="wcs-lbl">Осталось</div></div>
+          <div class="wcs"><div class="wcs-val">84</div><div class="wcs-lbl">Уже внутри</div></div>
+        </div>
+      </div>
+      <div class="cta sec" onclick="closeSh('sh-bonus')">Закрыть</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LEADERBOARD ══════════════════════════════════════ -->
+<div class="screen" id="s-leaderboard">
+  <div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-r"></div></div>
+  <div class="topnav">
+    <div class="back-btn" onclick="goBack()"><svg width="10" height="17" viewBox="0 0 10 17" fill="none"><path d="M9 1L1.5 8.5L9 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="topnav-title">Рейтинг городов</span>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll">
+    <div class="filter-row">
+      <div class="fc on">Эта неделя</div>
+      <div class="fc" onclick="swapChip(this)">Месяц</div>
+      <div class="fc" onclick="swapChip(this)">Всё время</div>
+    </div>
+    <div class="lb-wrap">
+      <div class="lb-my">
+        <div class="lb-rank">#3</div>
+        <div class="lb-ci">
+          <div class="lb-cn">🏙️ Москва — твой город</div>
+          <div class="lb-cp">487 320 очков · +12 840 за неделю</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <div class="pt" style="flex:1"><div class="pf" style="width:67%"></div></div>
+            <span style="font-size:11px;color:var(--blue);font-weight:700">67% до #2</span>
+          </div>
+        </div>
+        <div class="lb-trend">↑ +2</div>
+      </div>
+    </div>
+    <div class="div"></div>
+    <div class="lb-wrap">
+      <div class="lb-row"><div class="lb-n t">🥇</div><span class="lb-cf">🌆</span><div class="lb-cm"><div class="lb-nm">Санкт-Петербург</div><div class="lb-sp">🏃 Бег · ⚽ Футбол</div></div><div><div class="lb-pts">721 440</div><div class="lb-bar"><div class="lb-bf" style="width:100%"></div></div></div></div>
+      <div class="lb-row"><div class="lb-n t">🥈</div><span class="lb-cf">🏙️</span><div class="lb-cm"><div class="lb-nm">Екатеринбург</div><div class="lb-sp">💪 Силовые · 🏋️ Кроссфит</div></div><div><div class="lb-pts">612 190</div><div class="lb-bar"><div class="lb-bf" style="width:85%"></div></div></div></div>
+      <div class="lb-row lb-hi"><div class="lb-n t" style="color:var(--blue)">🥉</div><span class="lb-cf">🏙️</span><div class="lb-cm"><div class="lb-nm" style="color:var(--blue)">Москва ← ты здесь</div><div class="lb-sp">🏃 Бег · ⚽ Футбол</div></div><div><div class="lb-pts" style="color:var(--blue)">487 320</div><div class="lb-bar"><div class="lb-bf" style="width:67%"></div></div></div></div>
+      <div class="lb-row"><div class="lb-n">4</div><span class="lb-cf">🌃</span><div class="lb-cm"><div class="lb-nm">Новосибирск</div><div class="lb-sp">🏒 Хоккей · ⛷️ Лыжи</div></div><div><div class="lb-pts">398 700</div><div class="lb-bar"><div class="lb-bf" style="width:55%"></div></div></div></div>
+      <div class="lb-row"><div class="lb-n">5</div><span class="lb-cf">🏖️</span><div class="lb-cm"><div class="lb-nm">Сочи</div><div class="lb-sp">🏊 Плавание · 🚴 Велоспорт</div></div><div><div class="lb-pts">287 540</div><div class="lb-bar"><div class="lb-bf" style="width:40%"></div></div></div></div>
+      <div class="lb-row"><div class="lb-n">6</div><span class="lb-cf">🏔️</span><div class="lb-cm"><div class="lb-nm">Казань</div><div class="lb-sp">⚽ Футбол · 🏀 Баскетбол</div></div><div><div class="lb-pts">198 320</div><div class="lb-bar"><div class="lb-bf" style="width:27%"></div></div></div></div>
+    </div>
+    <div class="cta" onclick="goBack()" style="margin-top:16px">Вернуться на Арену</div>
+    <div style="height:30px"></div>
+  </div>
+</div>
+
+<!-- ═══ CITY PROFILE ════════════════════════════════════ -->
+<div class="screen" id="s-city-profile">
+  <div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-r"></div></div>
+  <div class="topnav">
+    <div class="back-btn" onclick="goBack()"><svg width="10" height="17" viewBox="0 0 10 17" fill="none"><path d="M9 1L1.5 8.5L9 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="topnav-title">Профиль города</span>
+    <div class="icon-btn" onclick="goTo('s-leaderboard')"><span style="font-size:15px">🏆</span></div>
+  </div>
+  <div class="scroll">
+    <div class="city-hero-h">
+      <div class="ch-flag">🏙️</div>
+      <div class="ch-city-name">Москва</div>
+      <div class="ch-city-sub">#3 в России · Спортивная столица</div>
+      <div class="ch-city-stats">
+        <div class="ccs"><div class="ccs-val">2 147</div><div class="ccs-lbl">Активны сегодня</div></div>
+        <div class="ccs"><div class="ccs-val">487K</div><div class="ccs-lbl">Очков города</div></div>
+        <div class="ccs"><div class="ccs-val">34</div><div class="ccs-lbl">Моих очков</div></div>
+      </div>
+    </div>
+    <div style="margin:14px 16px 0">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Мой вклад в Москву</div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px;border:.5px solid var(--border)">
+        <div style="display:flex;justify-content:space-around;margin-bottom:10px">
+          <div style="text-align:center"><div style="font-size:22px;font-weight:900;color:var(--blue)">34</div><div style="font-size:11px;color:var(--text2)">Очков городу</div></div>
+          <div style="text-align:center"><div style="font-size:22px;font-weight:900;color:var(--text1)">3</div><div style="font-size:11px;color:var(--text2)">Челленджа</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:900;color:var(--gold)">Top 8%</div><div style="font-size:11px;color:var(--text2)">Среди москвичей</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.4;text-align:center">Ты в числе самых активных! Каждая тренировка двигает Москву к #2</div>
+      </div>
+    </div>
+    <div class="sec-title" style="padding-top:14px">Спорт Москвы</div>
+    <div class="sec-sub">Что делают москвичи чаще всего</div>
+    <div class="sport-bars" style="margin-bottom:14px">
+      <div class="sbr"><div class="sb-ico">🏃</div><div class="sb-nm">Бег</div><div class="sb-t"><div class="sb-f" style="width:87%;background:var(--blue)"></div></div><div class="sb-pct">87%</div></div>
+      <div class="sbr"><div class="sb-ico">⚽</div><div class="sb-nm">Футбол</div><div class="sb-t"><div class="sb-f" style="width:64%;background:var(--green)"></div></div><div class="sb-pct">64%</div></div>
+      <div class="sbr"><div class="sb-ico">💪</div><div class="sb-nm">Тренировки</div><div class="sb-t"><div class="sb-f" style="width:58%;background:var(--gold)"></div></div><div class="sb-pct">58%</div></div>
+      <div class="sbr"><div class="sb-ico">🚴</div><div class="sb-nm">Велоспорт</div><div class="sb-t"><div class="sb-f" style="width:42%;background:#bf5af2"></div></div><div class="sb-pct">42%</div></div>
+      <div class="sbr"><div class="sb-ico">🏊</div><div class="sb-nm">Плавание</div><div class="sb-t"><div class="sb-f" style="width:29%;background:#32d2ff"></div></div><div class="sb-pct">29%</div></div>
+    </div>
+    <div class="div"></div>
+    <div class="sec-title" style="padding-top:12px;padding-bottom:4px">Достижения города</div>
+    <div class="badges">
+      <div class="badge"><div class="badge-ico">🏃</div><div class="badge-lbl">Марафонцы</div></div>
+      <div class="badge"><div class="badge-ico">⚽</div><div class="badge-lbl">Футболисты</div></div>
+      <div class="badge"><div class="badge-ico">🌧️</div><div class="badge-lbl">Всепогодные</div></div>
+      <div class="badge"><div class="badge-ico">🌅</div><div class="badge-lbl">Ранние птицы</div></div>
+      <div class="badge"><div class="badge-ico">🔥</div><div class="badge-lbl">30 дней</div></div>
+    </div>
+    <div class="cta" onclick="goBack()">На Арену</div>
+    <div class="cta sec" onclick="goTo('s-leaderboard')">Рейтинг городов</div>
+    <div style="height:30px"></div>
+  </div>
+</div>
+
+<!-- ═══ REWARD ════════════════════════════════════════════ -->
+<div class="screen" id="s-reward">
+  <div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-r"></div></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 24px 0;overflow:hidden">
+    <div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Челлендж принят!</div>
+    <div style="font-size:68px;margin-bottom:14px;animation:popIn .5s .1s cubic-bezier(.17,.67,.3,1.3) both">🏃</div>
+    <div style="font-size:24px;font-weight:900;color:var(--text1);text-align:center;letter-spacing:-.4px;margin-bottom:7px">Марафон «Москва»<br>начинается!</div>
+    <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:22px;line-height:1.5">Ты в деле. Пробеги 42 км за 7 дней.</div>
+    <div style="display:flex;gap:8px;width:100%;margin-bottom:14px">
+      <div class="pop-r"><div class="pop-r-ico">🏅</div><div class="pop-r-val">+500 ОА</div><div class="pop-r-lbl">Медалей</div></div>
+      <div class="pop-r"><div class="pop-r-ico">💰</div><div class="pop-r-val">+2 500</div><div class="pop-r-lbl">Монет</div></div>
+      <div class="pop-r"><div class="pop-r-ico">🎖️</div><div class="pop-r-val">Значок</div><div class="pop-r-lbl">«Марафонец»</div></div>
+    </div>
+    <div class="pop-city" style="width:100%">
+      <div class="pop-city-ico">🏙️</div>
+      <div class="pop-city-txt">Москва получит +500 очков после завершения</div>
+    </div>
+    <div style="width:100%;margin-top:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;color:var(--text2)">Москва → #2 место</span>
+        <span style="font-size:12px;font-weight:700;color:var(--blue)">67%</span>
+      </div>
+      <div class="pt"><div class="pf" style="width:67%"></div></div>
+    </div>
+  </div>
+  <div class="cta" onclick="goBack()" style="margin-top:16px">На карту</div>
+  <div class="cta sec" onclick="goTo('s-leaderboard')">Рейтинг городов</div>
+  <div style="height:34px"></div>
+</div>
+
+<!-- ═══ TASK REWARD POPUP ════════════════════════════════ -->
+<div class="task-reward-pop" id="task-reward-pop">
+  <div class="pop-emoji" id="pop-emoji">⚡</div>
+  <div class="pop-title" id="pop-title">Задание выполнено!</div>
+  <div class="pop-sub" id="pop-sub">Система засчитала автоматически</div>
+  <div class="pop-rewards">
+    <div class="pop-r"><div class="pop-r-ico">🏅</div><div class="pop-r-val" id="pop-oa">+50 ОА</div><div class="pop-r-lbl">Тебе</div></div>
+    <div class="pop-r"><div class="pop-r-ico">💎</div><div class="pop-r-val" id="pop-coin">+20</div><div class="pop-r-lbl">Монет</div></div>
+    <div class="pop-r"><div class="pop-r-ico">🔥</div><div class="pop-r-val">×1.5</div><div class="pop-r-lbl">Стрик</div></div>
+  </div>
+  <div class="pop-city">
+    <div class="pop-city-ico">🏙️</div>
+    <div class="pop-city-txt" id="pop-city-txt">Сокольники получили очки (стрик ×1.5)</div>
+  </div>
+  <div class="cta" style="width:100%;margin:0" onclick="closeTaskPop()">Отлично!</div>
+</div>
+
+<!-- ═══ FEED PLACEHOLDER ═════════════════════════════════ -->
+<div class="screen" id="s-feed">
+  <div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-r"></div></div>
+  <div class="topnav"><div style="width:36px"></div><span class="topnav-title">Лента</span><div style="width:36px"></div></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+    <div style="font-size:52px;margin-bottom:14px">📰</div>
+    <div style="font-size:20px;font-weight:800;color:var(--text1);margin-bottom:8px">Лента активности</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.5">Возвращайся в Арену!</div>
+    <div class="cta" style="margin-top:28px;width:100%" onclick="goTo('s-arena')">Перейти в Арену</div>
+  </div>
+  <div class="tabbar">
+    <div class="tab active"><span class="tab-ico">📰</span><span class="tab-lbl" style="color:var(--blue)">Лента</span></div>
+    <div class="tab"><span class="tab-ico">🎬</span><span class="tab-lbl">Reels</span></div>
+    <div class="tab" onclick="goTo('s-arena')"><span class="tab-ico">🏟️</span><span class="tab-lbl">Арена</span></div>
+    <div class="tab"><span class="tab-ico">💘</span><span class="tab-lbl">Dating</span></div>
+    <div class="tab"><span class="tab-ico">⚡</span><span class="tab-lbl">Strava</span></div>
+  </div>
+</div>
+
+</div><!-- /phone -->
+
+<script>
+/* ── Navigation ───────────────── */
+let hist = ['s-arena'];
+
+function goTo(id) {
+  const c = hist[hist.length-1];
+  if (c === id) return;
+  const f = document.getElementById(c), t = document.getElementById(id);
+  if (!f || !t) return;
+  f.classList.add('exit');
+  setTimeout(() => f.classList.remove('active','exit'), 295);
+  t.style.transform = 'translateX(32px)'; t.style.opacity = '0';
+  t.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => { t.style.transform = ''; t.style.opacity = ''; }));
+  hist.push(id);
+}
+
+function goBack() {
+  if (hist.length <= 1) return;
+  const c = hist.pop(), p = hist[hist.length-1];
+  const f = document.getElementById(c), t = document.getElementById(p);
+  if (!f || !t) return;
+  Object.assign(f.style, { transition:'opacity .24s,transform .24s', opacity:'0', transform:'translateX(32px)' });
+  setTimeout(() => { f.classList.remove('active'); f.style.cssText = ''; }, 260);
+  t.style.transform = 'translateX(-14px)'; t.style.opacity = '.85';
+  t.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => { t.style.transform = ''; t.style.opacity = ''; }));
+}
+
+/* ── Sheets ───────────────────── */
+function openSh(id) { document.getElementById(id).classList.add('open'); }
+function closeSh(id, e) {
+  if (!e || e.target === document.getElementById(id))
+    document.getElementById(id).classList.remove('open');
+}
+function startChallenge() { goTo('s-reward'); }
+function swapChip(el) {
+  el.closest('.filter-row').querySelectorAll('.fc').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ── Tasks panel ──────────────── */
+let panelOpen = false;
+function toggleTasksPanel() {
+  panelOpen = !panelOpen;
+  const panel = document.getElementById('tasks-panel');
+  const hud   = document.getElementById('hud-bot-main');
+  if (panelOpen) {
+    panel.classList.add('open');
+    if (hud) hud.style.opacity = '0';
+    panel.addEventListener('touchmove', stopProp, { passive: false });
+  } else {
+    panel.classList.remove('open');
+    if (hud) hud.style.opacity = '1';
+    panel.removeEventListener('touchmove', stopProp);
+  }
+}
+function stopProp(e) { e.stopPropagation(); }
+
+function switchPanelTab(el, tabId) {
+  el.closest('.tasks-tabs').querySelectorAll('.tasks-tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  ['ptab-daily','ptab-weekly','ptab-city'].forEach(id => {
+    const d = document.getElementById(id);
+    if (d) d.style.display = id === tabId ? 'flex' : 'none';
+  });
+}
+
+/* ── Accept task → auto-tracking ─ */
+let totalOA   = 114;
+let totalCoin = 340;
+const timers  = {};
+
+function acceptTask(taskId, oa, coins, cityPts, name, emoji, source, unit, goal, startVal) {
+  const card = document.getElementById(taskId);
+  if (!card || card.classList.contains('state-active') || card.classList.contains('state-done')) return;
+
+  card.classList.replace('state-new', 'state-active');
+  const btn    = card.querySelector('.task-accept-btn');
+  const srcEl  = card.querySelector('[id$="-src"]');
+  const bar    = card.querySelector('.task-prog-fill');
+  const valEl  = card.querySelector('[id$="-val"]');
+  if (btn)  btn.style.display = 'none';
+  if (srcEl) srcEl.textContent = source + ' · подключается...';
+
+  const startPct = Math.round(startVal / goal * 100);
+  if (bar)   setTimeout(() => bar.style.width = startPct + '%', 80);
+  if (valEl) valEl.textContent = startPct + '%';
+
+  setTimeout(() => {
+    let current = startVal;
+    const interval = setInterval(() => {
+      const delta = Math.floor(Math.random() * (goal * 0.07) + (goal * 0.04));
+      current = Math.min(goal, current + delta);
+      const pct = Math.round(current / goal * 100);
+      if (bar)   bar.style.width = pct + '%';
+      if (valEl) valEl.textContent = pct + '%';
+      if (srcEl) srcEl.textContent = source + ' · ' + current + ' из ' + goal + ' ' + unit;
+      if (current >= goal) {
+        clearInterval(interval);
+        delete timers[taskId];
+        setTimeout(() => autoComplete(taskId, oa, coins, cityPts, name, emoji, source, goal, unit), 600);
+      }
+    }, 2800);
+    timers[taskId] = interval;
+    if (srcEl) srcEl.textContent = source + ' · ' + startVal + ' из ' + goal + ' ' + unit;
+  }, 1000);
+}
+
+function autoComplete(taskId, oa, coins, cityPts, name, emoji, source, goal, unit) {
+  const card = document.getElementById(taskId);
+  if (!card) return;
+  card.classList.replace('state-active', 'state-done');
+  const bar    = card.querySelector('.task-prog-fill');
+  const valEl  = card.querySelector('[id$="-val"]');
+  const srcEl  = card.querySelector('[id$="-src"]');
+  const doneIco= card.querySelector('.task-done-ico');
+  if (bar)    bar.style.width = '100%';
+  if (valEl)  valEl.textContent = '✓ Выполнено';
+  if (srcEl)  srcEl.textContent = source + ' · ' + goal + ' из ' + goal + ' ' + unit;
+  if (doneIco) doneIco.style.display = 'flex';
+
+  totalOA   += oa;
+  totalCoin += coins;
+  ['oa-counter','oa-counter2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = totalOA; flashGreen(el); }
+  });
+  ['coin-counter','coin-counter2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = totalCoin;
+  });
+
+  const segs = document.querySelectorAll('.tasks-day-seg:not(.done)');
+  if (segs.length) segs[0].classList.add('done');
+
+  setTimeout(() => showRewardPop(emoji, name, oa, coins, cityPts), 300);
+}
+
+function showRewardPop(emoji, name, oa, coins, cityPts) {
+  document.getElementById('pop-emoji').textContent    = emoji;
+  document.getElementById('pop-sub').textContent      = name + ' — система засчитала!';
+  document.getElementById('pop-oa').textContent       = '+' + oa + ' ОА';
+  document.getElementById('pop-coin').textContent     = '+' + coins;
+  document.getElementById('pop-city-txt').textContent = 'Сокольники получили +' + Math.round(cityPts * 1.5) + ' очков (стрик ×1.5)';
+  document.getElementById('task-reward-pop').classList.add('show');
+}
+
+function closeTaskPop() {
+  document.getElementById('task-reward-pop').classList.remove('show');
+}
+
+function flashGreen(el) {
+  el.style.color = 'var(--green)';
+  setTimeout(() => el.style.color = '', 800);
+}
+
+/* ── MAP ──────────────────────── */
+const CANVAS = 1200, MIN_Z = 0.45, MAX_Z = 3.0;
+let mapState = { scale:1, tx:0, ty:0 };
+let drag = { active:false, moved:false, startX:0, startY:0, startTX:0, startTY:0 };
+let pinch = { active:false, startDist:0, startScale:1, midX:0, midY:0, startTX:0, startTY:0 };
+
+const wrap   = document.getElementById('map-wrap');
+const canvas = document.getElementById('map-canvas');
+const lbl    = document.getElementById('zoom-lbl');
+
+function applyTransform(anim) {
+  if (anim) { canvas.style.transition = 'transform .25s cubic-bezier(.25,.46,.45,.94)'; setTimeout(() => canvas.style.transition='',260); }
+  else canvas.style.transition = 'none';
+  canvas.style.transform = `translate(calc(-50% + ${mapState.tx}px), calc(-50% + ${mapState.ty}px)) scale(${mapState.scale})`;
+  if (lbl) lbl.textContent = mapState.scale.toFixed(2).replace(/\.?0+$/,'') + '×';
+}
+
+function clamp() {
+  const s = mapState.scale, hw = CANVAS*s/2, hh = CANVAS*s/2;
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  const mx = Math.max(0, hw - ww/2), my = Math.max(0, hh - wh/2);
+  mapState.tx = Math.max(-mx, Math.min(mx, mapState.tx));
+  mapState.ty = Math.max(-my, Math.min(my, mapState.ty));
+}
+
+function initMap() { mapState = {scale:1,tx:0,ty:0}; applyTransform(false); }
+initMap();
+
+function zoomMap(delta) {
+  const ns = Math.max(MIN_Z, Math.min(MAX_Z, mapState.scale + delta));
+  const r  = ns / mapState.scale;
+  mapState.tx *= r; mapState.ty *= r; mapState.scale = ns;
+  clamp(); applyTransform(true);
+}
+function resetMap() { mapState = {scale:1,tx:0,ty:0}; applyTransform(true); }
+
+wrap.addEventListener('mousedown', e => {
+  if (e.target.closest('.hud-top,.hud-bot,.map-ctrls,.pin,.zone,.bonus-zone,.sh-ov,.tasks-panel')) return;
+  if (panelOpen) { toggleTasksPanel(); return; }
+  drag.active = true; drag.moved = false;
+  drag.startX = e.clientX; drag.startY = e.clientY;
+  drag.startTX = mapState.tx; drag.startTY = mapState.ty;
+  wrap.classList.add('dragging'); e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if (!drag.active) return;
+  const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) drag.moved = true;
+  mapState.tx = drag.startTX + dx; mapState.ty = drag.startTY + dy;
+  clamp(); applyTransform(false);
+});
+window.addEventListener('mouseup', () => { drag.active = false; wrap.classList.remove('dragging'); });
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.12 : 0.12;
+  const rect = wrap.getBoundingClientRect();
+  const cx = e.clientX - rect.left - rect.width/2, cy = e.clientY - rect.top - rect.height/2;
+  const ns = Math.max(MIN_Z, Math.min(MAX_Z, mapState.scale + delta));
+  const r  = ns / mapState.scale;
+  mapState.tx = cx + (mapState.tx - cx)*r; mapState.ty = cy + (mapState.ty - cy)*r; mapState.scale = ns;
+  clamp(); applyTransform(false);
+}, {passive:false});
+
+function getTouchDist(t) { const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+function getTouchMid(t,rect) { return {x:(t[0].clientX+t[1].clientX)/2-rect.left-rect.width/2, y:(t[0].clientY+t[1].clientY)/2-rect.top-rect.height/2}; }
+
+wrap.addEventListener('touchstart', e => {
+  if (e.target.closest('.hud-top,.hud-bot,.map-ctrls,.sh-ov,.tasks-panel')) return;
+  if (panelOpen) { toggleTasksPanel(); return; }
+  if (e.touches.length === 1) {
+    const t = e.touches[0];
+    drag.active = true; drag.moved = false;
+    drag.startX = t.clientX; drag.startY = t.clientY;
+    drag.startTX = mapState.tx; drag.startTY = mapState.ty;
+    pinch.active = false;
+  } else if (e.touches.length === 2) {
+    drag.active = false; pinch.active = true;
+    pinch.startDist = getTouchDist(e.touches); pinch.startScale = mapState.scale;
+    const rect = wrap.getBoundingClientRect(), mid = getTouchMid(e.touches, rect);
+    pinch.midX = mid.x; pinch.midY = mid.y;
+    pinch.startTX = mapState.tx; pinch.startTY = mapState.ty;
+  }
+  e.preventDefault();
+}, {passive:false});
+
+wrap.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (drag.active && e.touches.length === 1) {
+    const t = e.touches[0], dx = t.clientX - drag.startX, dy = t.clientY - drag.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true;
+    mapState.tx = drag.startTX + dx; mapState.ty = drag.startTY + dy;
+    clamp(); applyTransform(false);
+  } else if (pinch.active && e.touches.length === 2) {
+    const dist = getTouchDist(e.touches);
+    const ns = Math.max(MIN_Z, Math.min(MAX_Z, pinch.startScale * (dist/pinch.startDist)));
+    const r  = ns / pinch.startScale;
+    mapState.tx = pinch.midX + (pinch.startTX - pinch.midX)*r;
+    mapState.ty = pinch.midY + (pinch.startTY - pinch.midY)*r;
+    mapState.scale = ns; clamp(); applyTransform(false);
+  }
+}, {passive:false});
+
+wrap.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinch.active = false;
+  if (e.touches.length === 0) drag.active = false;
+});
+
+wrap.addEventListener('click', e => {
+  if (drag.moved) { e.stopPropagation(); drag.moved = false; }
+}, true);
+</script>
+</body>
+</html>
